@@ -1,0 +1,201 @@
+// makeData.js
+export const data = [
+    {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      salary: 75000,
+      jobTitle: 'Software Engineer',
+      startDate: '2021-01-15',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Hello World!'
+    },
+    {
+      id: 2,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane.smith@example.com',
+      salary: 85000,
+      jobTitle: 'Product Manager',
+      startDate: '2020-05-20',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Let\'s make it happen!'
+    },
+    {
+      id: 3,
+      firstName: 'Michael',
+      lastName: 'Johnson',
+      email: 'michael.johnson@example.com',
+      salary: 65000,
+      jobTitle: 'Data Analyst',
+      startDate: '2022-03-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Data-driven decisions!'
+    },
+    {
+      id: 4,
+      firstName: 'Emily',
+      lastName: 'Brown',
+      email: 'emily.brown@example.com',
+      salary: 90000,
+      jobTitle: 'Marketing Manager',
+      startDate: '2019-09-10',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Connecting people with brands.'
+    },
+    {
+      id: 5,
+      firstName: 'David',
+      lastName: 'Wilson',
+      email: 'david.wilson@example.com',
+      salary: 80000,
+      jobTitle: 'Business Analyst',
+      startDate: '2021-06-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Turning data into insights.'
+    },
+    {
+      id: 6,
+      firstName: 'Sarah',
+      lastName: 'Davis',
+      email: 'sarah.davis@example.com',
+      salary: 75000,
+      jobTitle: 'Web Developer',
+      startDate: '2020-11-15',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Crafting beautiful and functional websites.'
+    },
+    {
+      id: 7,
+      firstName: 'Daniel',
+      lastName: 'Anderson',
+      email: 'daniel.anderson@example.com',
+      salary: 95000,
+      jobTitle: 'Project Manager',
+      startDate: '2018-04-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Delivering projects on time and within budget.'
+    },
+    {
+      id: 8,
+      firstName: 'Olivia',
+      lastName: 'Thompson',
+      email: 'olivia.thompson@example.com',
+      salary: 85000,
+      jobTitle: 'UX Designer',
+      startDate: '2021-02-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Designing user experiences that delight.'
+    },
+    {
+      id: 9,
+      firstName: 'Matthew',
+      lastName: 'Clark',
+      email: 'matthew.clark@example.com',
+      salary: 70000,
+      jobTitle: 'Technical Support Specialist',
+      startDate: '2019-07-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Here to help you with all your tech needs.'
+    },
+    {
+      id: 10,
+      firstName: 'Isabella',
+      lastName: 'Hernandez',
+      email: 'isabella.hernandez@example.com',
+      salary: 80000,
+      jobTitle: 'Software Engineer',
+      startDate: '2020-09-15',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Crafting impactful content experiences.'
+    },
+    {
+      id: 11,
+      firstName: 'Jacob',
+      lastName: 'Gonzalez',
+      email: 'jacob.gonzalez@example.com',
+      salary: 75000,
+      jobTitle: 'IT Support Technician',
+      startDate: '2021-04-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Keeping your tech running smoothly.'
+    },
+    {
+      id: 12,
+      firstName: 'Ava',
+      lastName: 'Diaz',
+      email: 'ava.diaz@example.com',
+      salary: 85000,
+      jobTitle: 'Digital Marketing Specialist',
+      startDate: '2020-01-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Driving online growth and engagement.'
+    },
+    {
+      id: 13,
+      firstName: 'William',
+      lastName: 'Ramirez',
+      email: 'william.ramirez@example.com',
+      salary: 80000,
+      jobTitle: 'Software Engineer',
+      startDate: '2019-11-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Connecting people, building teams.'
+    },
+    {
+      id: 14,
+      firstName: 'Sophia',
+      lastName: 'Morales',
+      email: 'sophia.morales@example.com',
+      salary: 90000,
+      jobTitle: 'Data Scientist',
+      startDate: '2021-08-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Unlocking insights from data.'
+    },
+    {
+      id: 15,
+      firstName: 'Alexander',
+      lastName: 'Sanchez',
+      email: 'alexander.sanchez@example.com',
+      salary: 75000,
+      jobTitle: 'Sales Representative',
+      startDate: '2020-06-15',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Building lasting relationships with clients.'
+    },
+    {
+      id: 16,
+      firstName: 'Emma',
+      lastName: 'Reyes',
+      email: 'emma.reyes@example.com',
+      salary: 85000,
+      jobTitle: 'Graphic Designer',
+      startDate: '2021-11-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Crafting visually stunning designs.'
+    },
+    {
+      id: 17,
+      firstName: 'Benjamin',
+      lastName: 'Gutierrez',
+      email: 'benjamin.gutierrez@example.com',
+      salary: 90000,
+      jobTitle: 'Financial Analyst',
+      startDate: '2019-02-01',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Providing data-driven financial insights.'
+    },
+    {
+      id: 18,
+      firstName: 'Abigail',
+      lastName: 'Torres',
+      email: 'abigail.torres@example.com',
+      salary: 80000,
+      jobTitle: 'IT Support Technician',
+      startDate: '2020-08-15',
+      avatar: 'https://via.placeholder.com/30',
+      signatureCatchPhrase: 'Empowering teams to achieve their best.'
+    },
+  ]

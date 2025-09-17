@@ -1,0 +1,6 @@
+.fixed-header-table .MuiTableHead-root {
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensure the header is above the table rows */
+  background-color: white; /* Or any other background color */
+}

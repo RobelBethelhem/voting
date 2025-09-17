@@ -1,0 +1,1 @@
+export const logo = 'src/assets/brand/zb.png';
