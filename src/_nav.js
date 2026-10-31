@@ -3,6 +3,7 @@ import React from 'react'
 import CIcon from '@coreui/icons-react'
 import {
   cilBell,
+  cilCalendar,
   cilCalculator,
   cilChartPie,
   cilCursor,
@@ -13,12 +14,17 @@ import {
   cilPuzzle,
   cilSpeedometer,
   cilStar,
-  cilUserFemale 
+  cilUserFemale,
+  cilPeople
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
 
-const _nav = (userRole) => [
+// The Deputy Chief Human Capital signs in as a chief and reviews re-rating requests
+// (matches DEPUTY_CHIEF_HC_POSITION in voting_backend/routes/rms/ReRating.js)
+const isDeputyChiefHC = (position) => /human\s*capital|\bHC\b/i.test(position || '')
+
+const _nav = (userRole, userPosition) => [
   {
     component: CNavItem,
     name: 'Dashboard',
@@ -62,6 +68,55 @@ const _nav = (userRole) => [
 
 
 
+  // Managers only see the Dashboard: directors do the rating and staff do the peer voting
+
+  ...(userRole === 'director' ? [
+    {
+      component: CNavTitle,
+      name: 'Director',
+    },
+    {
+      component: CNavGroup,
+      name: 'Director',
+      to: '/director',
+      icon: <CIcon icon={cilUserFemale} customClassName="nav-icon" />,
+      items: [
+        {
+          component: CNavItem,
+          name: 'Managerial Rating',
+          to: '/admin/managerial-rating'
+        },
+      ],
+    },
+  ] : []),
+
+  ...(userRole === 'chief' ? [
+    {
+      component: CNavTitle,
+      name: 'Chief',
+    },
+    {
+      component: CNavGroup,
+      name: 'Chief',
+      to: '/chief',
+      icon: <CIcon icon={cilUserFemale} customClassName="nav-icon" />,
+      items: [
+        {
+          component: CNavItem,
+          name: 'Chief Approval',
+          to: '/admin/chief-approval'
+        },
+        ...(isDeputyChiefHC(userPosition) ? [
+          {
+            component: CNavItem,
+            name: 'Re-rating Approvals',
+            to: '/admin/re-rating-approval'
+          },
+        ] : []),
+      ],
+    },
+  ] : []),
+
   ...(userRole === 'admin' ? [
   {
     component: CNavTitle,
@@ -77,6 +132,18 @@ const _nav = (userRole) => [
       
         {
           component: CNavItem,
+          name: 'Participation Dashboard',
+          to: '/admin/participation-dashboard',
+          icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />
+        },
+        {
+          component: CNavItem,
+          name: 'Fiscal Years',
+          to: '/admin/fiscal-years',
+          icon: <CIcon icon={cilCalendar} customClassName="nav-icon" />
+        },
+        {
+          component: CNavItem,
           name: 'Employee',
           to: '/admin/employee'
         },
@@ -84,6 +151,53 @@ const _nav = (userRole) => [
           component: CNavItem,
           name: 'Candidate',
           to: '/admin/candidate'
+        },
+        {
+          component: CNavItem,
+          name: 'Template',
+          to: '/admin/template'
+        },
+        {
+          component: CNavItem,
+          name: 'Quota Selection',
+          to: '/admin/quota-selection',
+          icon: <CIcon icon={cilPeople} customClassName="nav-icon" />
+        },
+        {
+          component: CNavGroup,
+          name: 'Hierarchical Registration',
+          items: [
+            {
+              component: CNavItem,
+              name: 'Chief Registration',
+              to: '/admin/hierarchy/chief'
+            },
+            {
+              component: CNavItem,
+              name: 'Director Registration',
+              to: '/admin/hierarchy/director'
+            },
+            {
+              component: CNavItem,
+              name: 'Manager Registration',
+              to: '/admin/hierarchy/manager'
+            },
+          ]
+        },
+        {
+          component: CNavItem,
+          name: 'Department Registration',
+          to: '/admin/department'
+        },
+        {
+          component: CNavItem,
+          name: 'Hierarchy Mapping',
+          to: '/admin/hierarchy-mapping'
+        },
+        {
+          component: CNavItem,
+          name: 'View Hierarchy',
+          to: '/admin/manage-hierarchy'
         },
 
         {
@@ -114,10 +228,23 @@ const _nav = (userRole) => [
           to: '/admin/chat'
         },
 
-  
-       
+        {
+          component: CNavItem,
+          name: 'Selected Best Staff',
+          to: '/admin/selected-best-staff',
+          icon: <CIcon icon={cilStar} customClassName="nav-icon" />
+        },
 
-        
+        {
+          component: CNavItem,
+          name: 'Re-rating Approvals',
+          to: '/admin/re-rating-approval'
+        },
+
+
+
+
+
         // {
         //   component: CNavItem,
         //   name: 'KPI_For_Site_Manger',

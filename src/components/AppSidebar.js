@@ -25,8 +25,9 @@ const AppSidebar = () => {
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const userRole = useSelector((state) => state.user.role)
+  const userPosition = useSelector((state) => state.user.userInfo?.position)
 
-  const navigation = _nav(userRole)
+  const navigation = _nav(userRole, userPosition)
 
   return (
     <CSidebar
@@ -42,7 +43,7 @@ const AppSidebar = () => {
       <CSidebarHeader className="border-bottom">
         <CSidebarBrand to="/">
         <CImage
-        customClassName="sidebar-brand-full"
+        className="sidebar-brand-full"
         src= { logo }
         height={80}
       />

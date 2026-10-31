@@ -9,68 +9,145 @@ import {
   Button,
   Paper,
   Modal,
-  CircularProgress
+  CircularProgress,
+  Chip,
+  LinearProgress,
+  IconButton,
+  Alert
 } from '@mui/material';
 import { MaterialReactTable } from 'material-react-table';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import LockIcon from '@mui/icons-material/Lock';
 import 'react-toastify/dist/ReactToastify.css';
+import { API_BASE } from 'src/api/base';
 
 const EmployeeEvaluation = () => {
     const accessToken = useSelector((state) => state.user.accessToken);
     const [employees, setEmployees] = useState([]);
+    const [evaluationCriteria, setEvaluationCriteria] = useState([]);
+    const [ratingMatrix, setRatingMatrix] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [showEvaluation, setShowEvaluation] = useState(false);
     const [openModal, setOpenModal] = useState(false);
+    const [currentCriteriaIndex, setCurrentCriteriaIndex] = useState(0);
+    const [completedCriteria, setCompletedCriteria] = useState(new Set());
+    const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
+    // The current fiscal year's voting period: votes are accepted only while it is open
+    const [votingWindow, setVotingWindow] = useState(null);
+    const votingClosed = votingWindow ? !votingWindow.open : false;
 
     useEffect(() => {
-        const fetchEmployees = async () => {
+        const fetchData = async () => {
             try {
-                const response = await fetch("http://localhost:5000/api/rms/admin/landing/get_candidate_by_department", {
-                    headers: {
-                        'x-access-token': accessToken
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch employees');
+                setLoading(true);
+
+                // Fetch employees, evaluation criteria, and rating matrix in parallel
+                const [employeesResponse, criteriaResponse, ratingResponse] = await Promise.all([
+                    fetch(`${API_BASE}/rms/admin/landing/get_candidate_by_department`, {
+                        headers: {
+                            'x-access-token': accessToken
+                        }
+                    }),
+                    fetch(`${API_BASE}/admin/template/criteria/peer`, {
+                        headers: {
+                            'x-access-token': accessToken
+                        }
+                    }),
+                    fetch(`${API_BASE}/admin/template/rating-matrix/peer`, {
+                        headers: {
+                            'x-access-token': accessToken
+                        }
+                    })
+                ]);
+
+                // Check if all requests were successful
+                if (!employeesResponse.ok || !criteriaResponse.ok || !ratingResponse.ok) {
+                    throw new Error('Failed to fetch data from server');
                 }
-                const data = await response.json();
-                setEmployees(data);
+
+                const [employeesData, criteriaData, ratingData] = await Promise.all([
+                    employeesResponse.json(),
+                    criteriaResponse.json(),
+                    ratingResponse.json()
+                ]);
+
+                console.log('Employees:', employeesData);
+                console.log('Criteria:', criteriaData);
+                console.log('Rating Matrix:', ratingData);
+
+                // Set employees
+                if (employeesData.error === false && employeesData.data) {
+                    setEmployees(employeesData.data);
+                } else {
+                    setEmployees([]);
+                }
+
+                // Set evaluation criteria
+                if (criteriaData.success && criteriaData.data) {
+                    setEvaluationCriteria(criteriaData.data);
+                } else {
+                    setEvaluationCriteria([]);
+                }
+
+                // Set rating matrix
+                if (ratingData.success && ratingData.data) {
+                    setRatingMatrix(ratingData.data.sort((a, b) => b.rating_number - a.rating_number)); // Sort by rating descending
+                } else {
+                    setRatingMatrix([]);
+                }
+
                 setLoading(false);
             } catch (err) {
+                console.error('Error fetching data:', err);
                 setError(err.message);
                 setLoading(false);
             }
         };
 
-        fetchEmployees();
+        if (accessToken) {
+            fetchData();
+            fetch(`${API_BASE}/fiscal-years/current`, {
+                headers: { 'x-access-token': accessToken }
+            })
+                .then(response => (response.ok ? response.json() : null))
+                .then(data => setVotingWindow(data?.voting || null))
+                .catch(err => console.error('Error loading voting period:', err));
+        }
     }, [accessToken]);
 
-    const criteriaData = [
-        { id: 1, name: 'Dedication', weight: 10 },
-        { id: 2, name: 'Quality of Work', weight: 5 },
-        { id: 3, name: 'Collaboration/Team Work', weight: 5 },
-        { id: 4, name: 'Independence', weight: 5 },
-        { id: 5, name: 'Customer Service', weight: 10 },
-        { id: 6, name: 'Time Mgt.', weight: 5 },
-        { id: 7, name: 'Proper Office Attire & Dress Code', weight: 5 },
-        { id: 8, name: 'Flexibility', weight: 5 },
-    ];
+    const [evaluations, setEvaluations] = useState([]);
 
-    const [evaluations, setEvaluations] = useState(
-        criteriaData.map(criteria => ({
-            criteriaId: criteria.id,
-            rating: null,
-        }))
-    );
+    // Update evaluations when criteria changes
+    useEffect(() => {
+        if (evaluationCriteria.length > 0) {
+            setEvaluations(
+                evaluationCriteria.map(criteria => ({
+                    criteriaId: criteria._id,
+                    criteriaName: criteria.criteria_name,
+                    weight: criteria.weight,
+                    rating: null,
+                }))
+            );
+        }
+    }, [evaluationCriteria]);
 
     const handleEmployeeSelect = (employee) => {
         setSelectedEmployee(employee);
         setShowEvaluation(false);
+        setCurrentCriteriaIndex(0);
+        setCompletedCriteria(new Set());
+        setShowIncompleteWarning(false);
+        // Reset all ratings when selecting a new employee
+        setEvaluations(prev => prev.map(e => ({ ...e, rating: null })));
         setTimeout(() => setShowEvaluation(true), 50);
     };
 
@@ -80,16 +157,41 @@ const EmployeeEvaluation = () => {
                 evaluation.criteriaId === criteriaId ? { ...evaluation, rating: value } : evaluation
             )
         );
+        
+        // Mark current criteria as completed and auto-advance to next
+        const newCompleted = new Set(completedCriteria);
+        newCompleted.add(currentCriteriaIndex);
+        setCompletedCriteria(newCompleted);
+        setShowIncompleteWarning(false);
+        
+        // Auto-advance to next criteria after a short delay
+        setTimeout(() => {
+            if (currentCriteriaIndex < evaluationCriteria.length - 1) {
+                setCurrentCriteriaIndex(currentCriteriaIndex + 1);
+            }
+        }, 500);
     };
 
     const calculateWeightedScore = () => {
+        // Find the maximum rating number from the rating matrix
+        const maxRating = ratingMatrix.length > 0 ? Math.max(...ratingMatrix.map(r => r.rating_number)) : 10;
+
         return evaluations.reduce((total, evaluation) => {
-            const criteria = criteriaData.find(c => c.id === evaluation.criteriaId);
-            return total + (evaluation.rating ? (evaluation.rating * criteria.weight) / 10 : 0);
+            if (!evaluation.rating) return total;
+
+            // Calculate weighted score: (rating / maxRating) * weight
+            // This gives the actual contribution of this criterion to the total score
+            const contributionScore = (evaluation.rating / maxRating) * evaluation.weight;
+            return total + contributionScore;
         }, 0);
     };
 
     const handleSubmit = async () => {
+        if (votingClosed) {
+            toast.error(votingWindow.message);
+            return;
+        }
+
         if (!selectedEmployee) {
             alert('Please select an employee');
             return;
@@ -109,7 +211,7 @@ const EmployeeEvaluation = () => {
         };
 
         try {
-            const response = await fetch("/api/api/zemen_vote_candidate/vote_candidate", {
+            const response = await fetch(`${API_BASE}/zemen_vote_candidate/vote_candidate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -142,6 +244,7 @@ const EmployeeEvaluation = () => {
                     <Radio
                         checked={selectedEmployee?.id === row.original.id}
                         onChange={() => handleEmployeeSelect(row.original)}
+                        sx={{ color: '#dc2626', '&.Mui-checked': { color: '#dc2626' } }}
                     />
                 ),
             },
@@ -161,17 +264,84 @@ const EmployeeEvaluation = () => {
         [selectedEmployee]
     );
 
+    const goToNextCriteria = () => {
+        const currentEvaluation = evaluations.find(e => e.criteriaId === evaluationCriteria[currentCriteriaIndex]?._id);
+        
+        if (!currentEvaluation || currentEvaluation.rating === null) {
+            setShowIncompleteWarning(true);
+            return;
+        }
+        
+        if (currentCriteriaIndex < evaluationCriteria.length - 1) {
+            setCurrentCriteriaIndex(currentCriteriaIndex + 1);
+            setShowIncompleteWarning(false);
+        }
+    };
+
+    const goToPreviousCriteria = () => {
+        if (currentCriteriaIndex > 0) {
+            setCurrentCriteriaIndex(currentCriteriaIndex - 1);
+            setShowIncompleteWarning(false);
+        }
+    };
+
+    const handleCriteriaJump = (index) => {
+        // Check if all previous criteria are completed
+        for (let i = 0; i < index; i++) {
+            const evaluation = evaluations.find(e => e.criteriaId === evaluationCriteria[i]._id);
+            if (!evaluation || evaluation.rating === null) {
+                setShowIncompleteWarning(true);
+                return;
+            }
+        }
+        setCurrentCriteriaIndex(index);
+        setShowIncompleteWarning(false);
+    };
+
     if (loading) {
-        return <CircularProgress />;
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                <CircularProgress sx={{ color: '#dc2626' }} />
+                <Typography sx={{ ml: 2 }}>Loading evaluation data...</Typography>
+            </Box>
+        );
     }
 
     if (error) {
-        return <Typography color="error">{error}</Typography>;
+        return (
+            <Box sx={{ p: 2 }}>
+                <Typography color="error" variant="h6">Error Loading Data</Typography>
+                <Typography color="error">{error}</Typography>
+            </Box>
+        );
+    }
+
+    if (employees.length === 0) {
+        return (
+            <Box sx={{ p: 2 }}>
+                <Typography variant="h6">No Candidates Available</Typography>
+                <Typography>No candidates found in your department for evaluation.</Typography>
+            </Box>
+        );
+    }
+
+    if (evaluationCriteria.length === 0) {
+        return (
+            <Box sx={{ p: 2 }}>
+                <Typography variant="h6">No Evaluation Criteria Available</Typography>
+                <Typography>Please contact your administrator to set up peer evaluation criteria.</Typography>
+            </Box>
+        );
     }
 
     return (
         <Box sx={{ display: 'flex', p: 2 }}>
-            <Box sx={{ width: '50%', pr: 2 }}>
+            <Box sx={{ width: '45%', pr: 2 }}>
+                {votingWindow && votingWindow.state !== 'not_set' && (
+                    <Alert severity={votingClosed ? 'warning' : 'info'} sx={{ mb: 2 }}>
+                        {votingWindow.message}
+                    </Alert>
+                )}
                 <MaterialReactTable
                     columns={columns}
                     data={employees}
@@ -181,72 +351,305 @@ const EmployeeEvaluation = () => {
                     enableSorting={true}
                     enableBottomToolbar={false}
                     enableTopToolbar={true}
+                    muiTablePaperProps={{
+                        sx: {
+                            border: '2px solid #000',
+                            boxShadow: 'none'
+                        }
+                    }}
                 />
             </Box>
-            <Box sx={{ width: '60%', pl: 2 }}>
-                <AnimatePresence>
+            <Box sx={{ width: '55%', pl: 2 }}>
+                <AnimatePresence mode="wait">
                     {showEvaluation && selectedEmployee && (
                         <motion.div
                             key={selectedEmployee.id}
-                            initial={{ opacity: 0, y: -100, rotate: 180 }}
-                            animate={{ opacity: 1, y: 0, rotate: 0 }}
-                            exit={{ opacity: 0, y: -100, rotate: 180 }}
-                            transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
                         >
-                            <Paper elevation={3} sx={{ p: 2 }}>
-                                <Typography variant="h6" gutterBottom>
-                                    Evaluation for {selectedEmployee.first_name} {selectedEmployee.last_name}
+                            <Paper elevation={0} sx={{ p: 3, border: '2px solid #000', borderRadius: 0 }}>
+                                <Typography variant="h5" gutterBottom sx={{ mb: 3, color: '#000', fontWeight: 'bold' }}>
+                                    Evaluating: {selectedEmployee.first_name} {selectedEmployee.last_name}
                                 </Typography>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr>
-                                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Criteria</th>
-                                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Weight</th>
-                                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Rating</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {criteriaData.map(criteria => (
-                                            <tr key={criteria.id}>
-                                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{criteria.name}</td>
-                                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>{criteria.weight}</td>
-                                                <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-                                                    <RadioGroup
-                                                        row
-                                                        value={evaluations.find(e => e.criteriaId === criteria.id)?.rating || ''}
-                                                        onChange={(e) => handleRatingChange(criteria.id, parseFloat(e.target.value))}
-                                                    >
-                                                        {[
-                                                            { label: 'Exceptional', value: 10 },
-                                                            { label: 'Exceeds Requirements', value: 7.5 },
-                                                            { label: 'Meets Requirements', value: 5 },
-                                                            { label: 'Unsatisfactory', value: 2.5 }
-                                                        ].map(option => (
-                                                            <FormControlLabel
-                                                                key={option.value}
-                                                                value={option.value}
-                                                                control={<Radio />}
-                                                                label={`${option.label} (${option.value})`}
-                                                            />
-                                                        ))}
-                                                    </RadioGroup>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <Typography variant="body1" sx={{ mt: 2 }}>
-                                    <strong>Total Weighted Score: </strong>
-                                    {calculateWeightedScore().toFixed(2)}
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={handleSubmit}
-                                    sx={{ mt: 2 }}
-                                >
-                                    Submit Evaluation
-                                </Button>
+                                
+                                {/* Progress Indicator */}
+                                <Box sx={{ mb: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                        <Typography variant="body2" sx={{ mr: 2, color: '#000', fontWeight: 'bold' }}>
+                                            Progress: {completedCriteria.size} / {evaluationCriteria.length}
+                                        </Typography>
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <LinearProgress 
+                                                variant="determinate" 
+                                                value={(completedCriteria.size / evaluationCriteria.length) * 100}
+                                                sx={{ 
+                                                    height: 8, 
+                                                    backgroundColor: '#f5f5f5',
+                                                    '& .MuiLinearProgress-bar': {
+                                                        backgroundColor: '#dc2626'
+                                                    }
+                                                }}
+                                            />
+                                        </Box>
+                                    </Box>
+                                    
+                                    {/* Criteria indicators */}
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        {evaluationCriteria.map((criteria, index) => {
+                                            const evaluation = evaluations.find(e => e.criteriaId === criteria._id);
+                                            const isCompleted = evaluation && evaluation.rating !== null;
+                                            const isLocked = index > 0 && !evaluations.find(e => e.criteriaId === evaluationCriteria[index - 1]._id)?.rating;
+                                            
+                                            return (
+                                                <Chip
+                                                    key={criteria._id}
+                                                    icon={isLocked ? <LockIcon /> : isCompleted ? 
+                                                        <CheckCircleIcon /> : 
+                                                        <RadioButtonUncheckedIcon />
+                                                    }
+                                                    label={`${index + 1}`}
+                                                    sx={{
+                                                        backgroundColor: index === currentCriteriaIndex ? '#dc2626' : 
+                                                                       isCompleted ? '#000' : '#fff',
+                                                        color: index === currentCriteriaIndex || isCompleted ? '#fff' : '#000',
+                                                        border: '1px solid #000',
+                                                        cursor: isLocked ? 'not-allowed' : 'pointer',
+                                                        opacity: isLocked ? 0.5 : 1,
+                                                        '&:hover': {
+                                                            backgroundColor: isLocked ? '' : index === currentCriteriaIndex ? '#dc2626' : 
+                                                                           isCompleted ? '#000' : '#f5f5f5',
+                                                        }
+                                                    }}
+                                                    onClick={() => !isLocked && handleCriteriaJump(index)}
+                                                />
+                                            );
+                                        })}
+                                    </Box>
+                                </Box>
+
+                                {/* Warning Message */}
+                                {showIncompleteWarning && (
+                                    <Alert 
+                                        severity="warning" 
+                                        sx={{ mb: 2, border: '1px solid #000' }}
+                                        onClose={() => setShowIncompleteWarning(false)}
+                                    >
+                                        Please complete the current criteria before moving forward!
+                                    </Alert>
+                                )}
+
+                                {/* Current Criteria Card */}
+                                <AnimatePresence mode="wait">
+                                    {evaluationCriteria[currentCriteriaIndex] && (
+                                        <motion.div
+                                            key={currentCriteriaIndex}
+                                            initial={{ opacity: 0, x: 50 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -50 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <Paper 
+                                                elevation={0} 
+                                                sx={{ 
+                                                    p: 3, 
+                                                    mb: 3,
+                                                    backgroundColor: '#dc2626',
+                                                    color: 'white',
+                                                    border: '2px solid #000'
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Typography variant="h6">
+                                                        Criteria {currentCriteriaIndex + 1} of {evaluationCriteria.length}
+                                                    </Typography>
+                                                    <Chip 
+                                                        label={`Weight: ${evaluationCriteria[currentCriteriaIndex].weight}`}
+                                                        sx={{ 
+                                                            bgcolor: 'white', 
+                                                            color: '#000',
+                                                            fontWeight: 'bold',
+                                                            border: '1px solid #000'
+                                                        }}
+                                                    />
+                                                </Box>
+                                                
+                                                <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
+                                                    {evaluationCriteria[currentCriteriaIndex].criteria_name}
+                                                </Typography>
+                                                
+                                                {evaluationCriteria[currentCriteriaIndex].description && (
+                                                    <Typography variant="body2" sx={{ opacity: 0.95 }}>
+                                                        {evaluationCriteria[currentCriteriaIndex].description}
+                                                    </Typography>
+                                                )}
+                                            </Paper>
+
+                                            {/* Rating Selection - Column Layout */}
+                                            <Paper elevation={0} sx={{ p: 2, mb: 3, border: '2px solid #000' }}>
+                                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: '#000' }}>
+                                                    Select Rating:
+                                                </Typography>
+                                                
+                                                <RadioGroup
+                                                    value={evaluations.find(e => e.criteriaId === evaluationCriteria[currentCriteriaIndex]._id)?.rating || ''}
+                                                    onChange={(e) => handleRatingChange(evaluationCriteria[currentCriteriaIndex]._id, parseFloat(e.target.value))}
+                                                >
+                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                                        {ratingMatrix.map((rating, index) => {
+                                                            const isSelected = evaluations.find(e => e.criteriaId === evaluationCriteria[currentCriteriaIndex]._id)?.rating === rating.rating_number;
+                                                            return (
+                                                                <motion.div
+                                                                    key={rating.rating_number}
+                                                                    initial={{ opacity: 0, x: -20 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: index * 0.05 }}
+                                                                    style={{ width: '100%' }}
+                                                                >
+                                                                    <Paper 
+                                                                        elevation={0}
+                                                                        sx={{ 
+                                                                            p: 2,
+                                                                            width: '100%',
+                                                                            cursor: 'pointer',
+                                                                            transition: 'all 0.2s',
+                                                                            border: isSelected ? '2px solid #dc2626' : '1px solid #000',
+                                                                            backgroundColor: isSelected ? '#fef2f2' : '#fff',
+                                                                            '&:hover': {
+                                                                                backgroundColor: isSelected ? '#fef2f2' : '#f5f5f5',
+                                                                                borderColor: '#dc2626'
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <FormControlLabel
+                                                                            value={rating.rating_number}
+                                                                            control={
+                                                                                <Radio 
+                                                                                    sx={{ 
+                                                                                        color: '#000',
+                                                                                        '&.Mui-checked': { color: '#dc2626' }
+                                                                                    }}
+                                                                                />
+                                                                            }
+                                                                            label={
+                                                                                <Box sx={{ 
+                                                                                    display: 'flex', 
+                                                                                    justifyContent: 'space-between', 
+                                                                                    alignItems: 'center',
+                                                                                    width: '100%',
+                                                                                    minWidth: '300px'
+                                                                                }}>
+                                                                                    <Typography 
+                                                                                        variant="subtitle1" 
+                                                                                        sx={{ 
+                                                                                            fontWeight: isSelected ? 'bold' : 'normal',
+                                                                                            color: '#000',
+                                                                                            flex: 1
+                                                                                        }}
+                                                                                    >
+                                                                                        {rating.matrix_name}
+                                                                                    </Typography>
+                                                                                    <Chip 
+                                                                                        label={rating.rating_number}
+                                                                                        size="small"
+                                                                                        sx={{ 
+                                                                                            ml: 2,
+                                                                                            backgroundColor: isSelected ? '#dc2626' : '#000',
+                                                                                            color: '#fff',
+                                                                                            fontWeight: 'bold',
+                                                                                            minWidth: '40px'
+                                                                                        }}
+                                                                                    />
+                                                                                </Box>
+                                                                            }
+                                                                            sx={{ 
+                                                                                margin: 0, 
+                                                                                width: '100%',
+                                                                                '& .MuiFormControlLabel-label': {
+                                                                                    width: '100%'
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </Paper>
+                                                                </motion.div>
+                                                            );
+                                                        })}
+                                                    </Box>
+                                                </RadioGroup>
+                                                
+                                                {ratingMatrix.length === 0 && (
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        No rating matrix available. Please contact admin.
+                                                    </Typography>
+                                                )}
+                                            </Paper>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Navigation and Score */}
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box>
+                                        <IconButton 
+                                            onClick={goToPreviousCriteria}
+                                            disabled={currentCriteriaIndex === 0}
+                                            sx={{ 
+                                                mr: 1,
+                                                border: '1px solid #000',
+                                                '&:hover': { backgroundColor: '#f5f5f5' }
+                                            }}
+                                        >
+                                            <NavigateBeforeIcon />
+                                        </IconButton>
+                                        <IconButton 
+                                            onClick={goToNextCriteria}
+                                            disabled={currentCriteriaIndex === evaluationCriteria.length - 1}
+                                            sx={{ 
+                                                border: '1px solid #000',
+                                                '&:hover': { backgroundColor: '#f5f5f5' }
+                                            }}
+                                        >
+                                            <NavigateNextIcon />
+                                        </IconButton>
+                                    </Box>
+                                    
+                                    <Typography variant="h6" sx={{ color: '#000', fontWeight: 'bold' }}>
+                                        Total Score: {calculateWeightedScore().toFixed(2)}
+                                    </Typography>
+                                </Box>
+
+                                {/* Submit Button */}
+                                {completedCriteria.size === evaluationCriteria.length && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <Button
+                                            variant="contained"
+                                            onClick={handleSubmit}
+                                            disabled={votingClosed}
+                                            fullWidth
+                                            sx={{ 
+                                                mt: 3,
+                                                py: 1.5,
+                                                backgroundColor: '#dc2626',
+                                                color: '#fff',
+                                                border: '2px solid #000',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 'bold',
+                                                '&:hover': {
+                                                    backgroundColor: '#b91c1c',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 4px 0 #000'
+                                                }
+                                            }}
+                                        >
+                                            Submit Complete Evaluation
+                                        </Button>
+                                    </motion.div>
+                                )}
                             </Paper>
                         </motion.div>
                     )}
@@ -275,7 +678,19 @@ const EmployeeEvaluation = () => {
                     <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                         Please fill out all fields in the evaluation form before submitting.
                     </Typography>
-                    <Button onClick={() => setOpenModal(false)} sx={{ mt: 2 }}>
+                    <Button 
+                        onClick={() => setOpenModal(false)} 
+                        sx={{ 
+                            mt: 2,
+                            color: '#dc2626',
+                            borderColor: '#dc2626',
+                            '&:hover': {
+                                borderColor: '#b91c1c',
+                                backgroundColor: '#fef2f2'
+                            }
+                        }}
+                        variant="outlined"
+                    >
                         Close
                     </Button>
                 </Box>

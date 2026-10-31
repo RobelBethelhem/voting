@@ -6,6 +6,9 @@ import 'core-js'
 import App from './App'
 import {store, persistor } from './store'
 import { PersistGate, } from 'redux-persist/integration/react'
+import { installApiAuth } from './api/auth'
+
+installApiAuth(store)
 
 
 createRoot(document.getElementById('root')).render(

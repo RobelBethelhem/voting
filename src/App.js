@@ -44,7 +44,7 @@ const App = () => {
           <Route exact path="/" name="Login Page" element={<Login />} />
         
           <Route path="*" name="Home" element={
-            <PrivateRoute allowedRoles={['user' ,'admin']} >
+            <PrivateRoute allowedRoles={['user', 'manager', 'director', 'chief', 'admin']} >
             <DefaultLayout />
             </PrivateRoute>
           }

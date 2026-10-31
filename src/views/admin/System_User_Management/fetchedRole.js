@@ -1,5 +1,9 @@
 export const roles = [
-    'user','admin'
+    'admin',
+    'chief',
+    'director',
+    'manager',
+    'professional'
    ];
 
 

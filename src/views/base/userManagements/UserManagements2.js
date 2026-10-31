@@ -27,6 +27,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
+import { API_BASE } from 'src/api/base';
 
 const Example = () => {
   const [validationErrors, setValidationErrors] = useState({});
@@ -45,7 +46,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('/api/api/getUsers');
+      const fetchURL = new URL(`${API_BASE}/getUsers`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -262,7 +263,7 @@ function useCreateUser(refetch) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user) => {
-      const response = await axios.post(`/api/api/signUp/`, user);
+      const response = await axios.post(`${API_BASE}/signUp/`, user);
       return response.data;
     },
     onMutate: (newUserInfo) => {
@@ -283,7 +284,7 @@ function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user) => {
-      const response = await axios.patch(`/api/api/editUser/`, user);
+      const response = await axios.patch(`${API_BASE}/editUser/`, user);
       return response.data;
     },
     onMutate: (newUserInfo) => {
@@ -300,7 +301,7 @@ function useDeleteUser(refetch) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId) => {
-      const response = await axios.delete(`/api/api/deleteUser/`, {
+      const response = await axios.delete(`${API_BASE}/deleteUser/`, {
         data: { id: userId },
       });
       return response.data;

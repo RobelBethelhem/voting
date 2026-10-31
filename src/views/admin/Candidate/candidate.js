@@ -36,6 +36,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useSelector } from 'react-redux';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
+import { API_BASE } from 'src/api/base';
 
 const ExcelImportDialog = ({ open, onClose, onImport }) => {
   const [file, setFile] = useState(null);
@@ -63,11 +64,11 @@ const ExcelImportDialog = ({ open, onClose, onImport }) => {
   });
 
   const validateExcelFormat = (data) => {
-    const requiredHeaders = ['employee_id', 'first_name', 'last_name', 'department', 'position'];
+    const requiredHeaders = ['employee_id', 'first_name', 'last_name', 'department', 'position', 'performance_appraisal_score', 'department_name'];
     const headers = Object.keys(data[0]);
     
     if (!requiredHeaders.every(header => headers.includes(header))) {
-      return { isValid: false, error: 'Invalid Excel format. Please ensure the file contains columns: employee_id, first_name, last_name, department, and position' };
+      return { isValid: false, error: 'Invalid Excel format. Please ensure the file contains columns: employee_id, first_name, last_name, department, position, performance_appraisal_score, and department_name' };
     }
 
     const errors = [];
@@ -129,7 +130,7 @@ const ExcelImportDialog = ({ open, onClose, onImport }) => {
           const formData = new FormData();
           formData.append('file', file);
 
-          const response = await fetch('/api/api/candidates/candidate_excel_upload', {
+          const response = await fetch(`${API_BASE}/candidates/candidate_excel_upload`, {
             method: 'POST',
             headers: {
               'x-access-token': accessToken,
@@ -197,7 +198,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('http://localhost:5000/api/rms/admin/landing/get_candidate');
+      const fetchURL = new URL(`${API_BASE}/rms/admin/landing/get_candidate`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -231,6 +232,34 @@ const Example = () => {
 
   const handleExcelImportSuccess = () => {
     refetch(); // Refresh the data after successful import
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        employee_id: "EMP001",
+        first_name: "John",
+        last_name: "Doe",
+        department_name: "Information Technology",
+        position: "Senior Developer",
+        level: "professional",
+        performance_appraisal_score: 85
+      },
+      {
+        employee_id: "EMP002",
+        first_name: "Alice",
+        last_name: "Johnson",
+        department_name: "Finance",
+        position: "Financial Analyst",
+        level: "professional",
+        performance_appraisal_score: 88
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Candidates");
+    XLSX.writeFile(wb, "candidate_template.xlsx");
   };
 
 
@@ -346,6 +375,26 @@ const Example = () => {
               ...validationErrors,
               position: undefined,
             }),
+        },
+      },
+      {
+        accessorKey: 'performance_appraisal_score',
+        header: 'Performance Score (/100)',
+        muiEditTextFieldProps: {
+          type: 'number',
+          inputProps: { min: 0, max: 100, step: 0.01 },
+          required: true,
+          error: !!validationErrors?.performance_appraisal_score,
+          helperText: validationErrors?.performance_appraisal_score,
+          onFocus: () =>
+            setValidationErrors({
+              ...validationErrors,
+              performance_appraisal_score: undefined,
+            }),
+        },
+        Cell: ({ cell }) => {
+          const value = cell.getValue();
+          return value ? `${parseFloat(value).toFixed(2)}/100` : 'N/A';
         },
       },
       
@@ -538,6 +587,9 @@ const Example = () => {
        <Button variant="contained" onClick={handleExcelImport}>
         Import Excel
       </Button>
+      <Button variant="outlined" onClick={downloadTemplate} sx={{ ml: 2 }}>
+        Download Template
+      </Button>
 
       <ExcelImportDialog
         open={isExcelImportOpen}
@@ -581,7 +633,7 @@ function useCreateUser(refetch) {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/rms/admin/site/register_site", {
+      const response = await fetch(`${API_BASE}/candidates/register_candidate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -598,7 +650,7 @@ function useCreateUser(refetch) {
       }
 
 
-      // const response = await axios.post(`http://localhost:5000/api/signUp/`, user);
+      // const response = await axios.post(`${API_BASE}/signUp/`, user);
       // return response.data;
     },
     onMutate: (newUserInfo) => {
@@ -621,7 +673,7 @@ function useUpdateUser() {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/rms/admin/site/update_register_site", {
+      const response = await fetch(`${API_BASE}/candidates/update_candidate`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -630,7 +682,7 @@ function useUpdateUser() {
         body: JSON.stringify(user)
       });
 
-      // const response = await axios.patch(`http://localhost:5000/api/editUser/`, user);
+      // const response = await axios.patch(`${API_BASE}/editUser/`, user);
      
       const data = await response.json()
       if(response.ok){
@@ -656,11 +708,11 @@ function useDeleteUser(refetch) {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (userId) => {
-      // const response = await axios.delete(`http://localhost:5000/api/deleteUser/`, {
+      // const response = await axios.delete(`${API_BASE}/deleteUser/`, {
       //   data: { id: userId },
       // });
 
-      const response = await fetch("/api/api/rms/admin/site/delete_register_site", {
+      const response = await fetch(`${API_BASE}/candidates/delete_candidate`, {
         method: "Delete",
         headers: {
           "Content-Type": "application/json",
@@ -702,10 +754,24 @@ export default ExampleWithProviders;
 
 const validateRequired = (value) => !!value.length;
 
-function validateUser(site) {
-  return {
-    site_name: !validateRequired(site.site_name) ? 'Site_name is Required' : '',
-    description: !validateRequired(site.description) ? 'Description is Required' : '',
-    place_id: !validateRequired(site.place_id) ? 'Place_ID is Required' : '',
+function validateUser(candidate) {
+  const errors = {
+    employee_id: !validateRequired(candidate.employee_id) ? 'Employee ID is Required' : '',
+    first_name: !validateRequired(candidate.first_name) ? 'First Name is Required' : '',
+    last_name: !validateRequired(candidate.last_name) ? 'Last Name is Required' : '',
+    department: !validateRequired(candidate.department) ? 'Department is Required' : '',
+    position: !validateRequired(candidate.position) ? 'Position is Required' : '',
   };
+
+  // Validate performance appraisal score
+  if (!candidate.performance_appraisal_score) {
+    errors.performance_appraisal_score = 'Performance Appraisal Score is Required';
+  } else {
+    const score = parseFloat(candidate.performance_appraisal_score);
+    if (isNaN(score) || score < 0 || score > 100) {
+      errors.performance_appraisal_score = 'Performance score must be between 0 and 100';
+    }
+  }
+
+  return errors;
 }

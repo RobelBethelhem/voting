@@ -34,6 +34,7 @@ import { useDropzone } from 'react-dropzone';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API_BASE } from 'src/api/base';
 
 
 
@@ -65,11 +66,11 @@ const ExcelImportDialog = ({ open, onClose, onImport }) => {
 
 
   const validateExcelFormat = (data) => {
-    const requiredHeaders = ['first_name', 'last_name', 'employee_id', 'user', 'email', 'position','department','roles' ];
+    const requiredHeaders = ['first_name', 'last_name', 'employee_id', 'user', 'email', 'position', 'department_name'];
     const headers = Object.keys(data[0]);
     
     if (!requiredHeaders.every(header => headers.includes(header))) {
-      return { isValid: false, error: 'Invalid Excel format. Please ensure the file contains columns: employee_id, first_name, last_name, department, and position' };
+      return { isValid: false, error: 'Invalid Excel format. Please ensure the file contains columns: first_name, last_name, employee_id, user, email, position, department_name' };
     }
 
     const errors = [];
@@ -94,8 +95,8 @@ const ExcelImportDialog = ({ open, onClose, onImport }) => {
       if (!nameRegex.test(row.position)) {
         errors.push(`Row ${i + 2}: position should not contain numbers or special characters`);
       }
-      if (!nameRegex.test(row.roles)) {
-        errors.push(`Row ${i + 2}: roles should not contain numbers or special characters`);
+      if (row.level && !nameRegex.test(row.level)) {
+        errors.push(`Row ${i + 2}: level should not contain numbers or special characters`);
       }
       if (!nameRegex.test(row.last_name)) {
         errors.push(`Row ${i + 2}: last_name should not contain numbers or special characters`);
@@ -137,7 +138,7 @@ const ExcelImportDialog = ({ open, onClose, onImport }) => {
           const formData = new FormData();
           formData.append('file', file);
 
-          const response = await fetch('/api/api/candidates/employee_excel_upload', {
+          const response = await fetch('/api/admin/import-employees', {
             method: 'POST',
             headers: {
               'x-access-token': accessToken,
@@ -204,7 +205,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('http://127.0.0.1:5000/api/getUsers');
+      const fetchURL = new URL(`${API_BASE}/getUsers`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -229,6 +230,44 @@ const Example = () => {
   };
   const handleExcelImportSuccess = () => {
     refetch(); // Refresh the data after successful import
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        first_name: "John",
+        last_name: "Doe",
+        employee_id: "EMP001",
+        user: "johndoe",
+        email: "john.doe@company.com",
+        position: "Senior Developer",
+        department_name: "Information Technology",
+        level: "professional",
+        job_grade: "P3",
+        function: "Software Development",
+        performance_appraisal_score: 85,
+        is_managerial: false
+      },
+      {
+        first_name: "Jane",
+        last_name: "Smith",
+        employee_id: "MGR001",
+        user: "janesmith",
+        email: "jane.smith@company.com",
+        position: "Development Manager",
+        department_name: "Information Technology",
+        level: "manager",
+        job_grade: "M2",
+        function: "Team Management",
+        performance_appraisal_score: 90,
+        is_managerial: true
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Employees");
+    XLSX.writeFile(wb, "employee_template.xlsx");
   };
 
  
@@ -340,14 +379,16 @@ const Example = () => {
      
 
       {
-        accessorKey: 'roles',
-        header: 'Roles',
-        editVariant: 'select',
-        editSelectOptions: roles,
+        accessorKey: 'department_name',
+        header: 'Department',
         muiEditTextFieldProps: {
-          select: true,
-          error: !!validationErrors?.roles,
-          helperText: validationErrors?.roles,
+          error: !!validationErrors?.department_name,
+          helperText: validationErrors?.department_name,
+          onFocus: () =>
+            setValidationErrors({
+              ...validationErrors,
+              department_name: undefined,
+            }),
         },
       },
       
@@ -494,6 +535,9 @@ const Example = () => {
       <Button variant="contained" onClick={handleExcelImport}>
         Import Excel
       </Button>
+      <Button variant="outlined" onClick={downloadTemplate} sx={{ ml: 2 }}>
+        Download Template
+      </Button>
 
       <ExcelImportDialog
         open={isExcelImportOpen}
@@ -535,7 +579,7 @@ function useCreateUser(refetch) {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/signUp/", {
+      const response = await fetch(`${API_BASE}/signUp/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -551,7 +595,7 @@ function useCreateUser(refetch) {
       }
 
 
-      // const response = await axios.post(`http://localhost:5000/api/signUp/`, user);
+      // const response = await axios.post(`${API_BASE}/signUp/`, user);
       // return response.data;
     },
     onMutate: (newUserInfo) => {
@@ -573,7 +617,7 @@ function useUpdateUser() {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/editUser/", {
+      const response = await fetch(`${API_BASE}/editUser/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -581,7 +625,7 @@ function useUpdateUser() {
         body: JSON.stringify(user)
       });
 
-      // const response = await axios.patch(`http://localhost:5000/api/editUser/`, user);
+      // const response = await axios.patch(`${API_BASE}/editUser/`, user);
      
       const data = await response.json()
       if(response.ok){
@@ -606,11 +650,11 @@ function useDeleteUser(refetch) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId) => {
-      // const response = await axios.delete(`http://localhost:5000/api/deleteUser/`, {
+      // const response = await axios.delete(`${API_BASE}/deleteUser/`, {
       //   data: { id: userId },
       // });
 
-      const response = await fetch("/api/api/deleteUser/", {
+      const response = await fetch(`${API_BASE}/deleteUser/`, {
         method: "Delete",
         headers: {
           "Content-Type": "application/json",
@@ -655,8 +699,13 @@ const validateEmail = (email) =>
 
 function validateUser(user) {
   return {
-    name: !validateRequired(user.name) ? 'Name is Required' : '',
+    first_name: !validateRequired(user.first_name) ? 'First Name is Required' : '',
+    last_name: !validateRequired(user.last_name) ? 'Last Name is Required' : '',
+    employee_id: !validateRequired(user.employee_id) ? 'Employee ID is Required' : '',
+    user: !validateRequired(user.user) ? 'Username is Required' : '',
     email: !validateEmail(user.email) ? 'Incorrect Email Format' : '',
-    roles: user.roles.length === 0 ? 'Roles are Required' : '',
+    position: !validateRequired(user.position) ? 'Position is Required' : '',
+    department: !validateRequired(user.department) ? 'Department is Required' : '',
+    department_name: !validateRequired(user.department_name) ? 'Department is Required' : '',
   };
 }

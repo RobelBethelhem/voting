@@ -33,6 +33,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const Example = () => {
   const [validationErrors, setValidationErrors] = useState({});
@@ -51,7 +52,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('http://localhost:5000/api/rms/admin/landing/get_price_per_site_data');
+      const fetchURL = new URL(`${API_BASE}/rms/admin/landing/get_price_per_site_data`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -394,7 +395,7 @@ function useCreateUser(refetch) {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/rms/admin/set_price_per_site", {
+      const response = await fetch(`${API_BASE}/rms/admin/set_price_per_site`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -411,7 +412,7 @@ function useCreateUser(refetch) {
       }
 
 
-      // const response = await axios.post(`http://localhost:5000/api/signUp/`, user);
+      // const response = await axios.post(`${API_BASE}/signUp/`, user);
       // return response.data;
     },
     onMutate: (newUserInfo) => {
@@ -434,7 +435,7 @@ function useUpdateUser() {
   return useMutation({
     mutationFn: async (user) => {
 
-      const response = await fetch("/api/api/rms/admin/update_set_price_per_site", {
+      const response = await fetch(`${API_BASE}/rms/admin/update_set_price_per_site`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -443,7 +444,7 @@ function useUpdateUser() {
         body: JSON.stringify(user)
       });
 
-      // const response = await axios.patch(`http://localhost:5000/api/editUser/`, user);
+      // const response = await axios.patch(`${API_BASE}/editUser/`, user);
      
       const data = await response.json()
       if(response.ok){
@@ -469,11 +470,11 @@ function useDeleteUser(refetch) {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (userId) => {
-      // const response = await axios.delete(`http://localhost:5000/api/deleteUser/`, {
+      // const response = await axios.delete(`${API_BASE}/deleteUser/`, {
       //   data: { id: userId },
       // });
 
-      const response = await fetch("/api/api/rms/admin/delete_set_price_per_site", {
+      const response = await fetch(`${API_BASE}/rms/admin/delete_set_price_per_site`, {
         method: "Delete",
         headers: {
           "Content-Type": "application/json",

@@ -31,6 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const Example = () => {
   const [validationErrors, setValidationErrors] = useState({});
@@ -83,7 +84,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('http://localhost:5000/api/rms/admin/landing/get_place');
+      const fetchURL = new URL(`${API_BASE}/rms/admin/landing/get_place`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -403,7 +404,7 @@ function useCreateUser(refetch) {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (user) => {
-      const response = await fetch('/api/api/rms/admin/place/register_place', {
+      const response = await fetch(`${API_BASE}/rms/admin/place/register_place`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -437,7 +438,7 @@ function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user) => {
-      const response = await fetch('/api/api/rms/admin/place/update_register_place', {
+      const response = await fetch(`${API_BASE}/rms/admin/place/update_register_place`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -468,7 +469,7 @@ function useDeleteUser(refetch) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId) => {
-      const response = await fetch('/api/api/rms/admin/place/delete_register_place', {
+      const response = await fetch(`${API_BASE}/rms/admin/place/delete_register_place`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,7 @@ import { Select, MenuItem, TextField, Checkbox, ListItemText, OutlinedInput } fr
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { API_BASE } from 'src/api/base';
 
 
 
@@ -44,7 +45,7 @@ const VoterStatisticsDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/rms/admin/landing/get_vote_stasticss", {
+      const response = await fetch(`${API_BASE}/rms/admin/landing/get_vote_stasticss`, {
         headers: {
           'Content-Type': 'application/json',
           'x-access-token': accessToken,

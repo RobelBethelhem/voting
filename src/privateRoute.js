@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import {jwtDecode} from 'jwt-decode';
 
 import { useDispatch, useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const PrivateRoute = ({ allowedRoles, children }) => {
   const accessToken = useSelector(state => state.user.accessToken);
@@ -14,7 +15,7 @@ const PrivateRoute = ({ allowedRoles, children }) => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await fetch('/api/api/verify-token', {
+        const response = await fetch(`${API_BASE}/verify-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

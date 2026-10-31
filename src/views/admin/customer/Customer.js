@@ -33,6 +33,7 @@ import { useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { API_BASE } from 'src/api/base';
 
 
 
@@ -60,7 +61,7 @@ const Example = () => {
   } = useQuery({
     queryKey: ['table-data', columnFilters, globalFilter, sorting],
     queryFn: async () => {
-      const fetchURL = new URL('http://localhost:5000/api/rms/admin/landing/get_customer');
+      const fetchURL = new URL(`${API_BASE}/rms/admin/landing/get_customer`, window.location.origin);
 
       fetchURL.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
       fetchURL.searchParams.set('globalFilter', globalFilter ?? '');
@@ -401,7 +402,7 @@ function useCreateUser(refetch) {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (user) => {
-      const response = await fetch('/api/api/rms/admin/register_customer', {
+      const response = await fetch(`${API_BASE}/rms/admin/register_customer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -435,7 +436,7 @@ function useUpdateUser() {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (user) => {
-      const response = await fetch('/api/api/rms/admin/update_customer', {
+      const response = await fetch(`${API_BASE}/rms/admin/update_customer`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -466,7 +467,7 @@ function useDeleteUser(refetch) {
   const accessToken = useSelector((state) => state.user.accessToken);
   return useMutation({
     mutationFn: async (userId) => {
-      const response = await fetch('/api/api/rms/admin/delete_customer', {
+      const response = await fetch(`${API_BASE}/rms/admin/delete_customer`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

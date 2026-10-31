@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -19,7 +20,7 @@ const VoterStatisticsDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/rms/admin/landing/get_vote_stasticss", {
+      const response = await fetch(`${API_BASE}/rms/admin/landing/get_vote_stasticss`, {
         headers: {
           'Content-Type': 'application/json',
           'x-access-token': accessToken,

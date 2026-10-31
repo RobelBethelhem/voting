@@ -1,9 +1,10 @@
+import { API_BASE } from 'src/api/base'
 // import { useEffect, useState } from 'react';
 // import axios from 'axios';
 // Function to fetch users using axios
 // export const fetchUsers = async () => {
 //   try {
-//     const response = await axios.get('http://localhost:5000/api/getUsers');
+//     const response = await axios.get(`${API_BASE}/getUsers`);
 //     console.log("fweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 //     return response.data;
     

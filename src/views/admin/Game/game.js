@@ -3,6 +3,7 @@ import Taxi from './Taxi';
 import Obstacle from './Obstacle';
 import GameControls from './GameControls';
 import { useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const LANE_WIDTH = 100;
 const TAXI_WIDTH = 40;  // Reduced from 60
@@ -103,7 +104,7 @@ const Game = () => {
 
     const sendScore = async (finalScore) => {
         try {
-            const response = await fetch('/api/api/candidates/game_score', {
+            const response = await fetch(`${API_BASE}/candidates/game_score`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

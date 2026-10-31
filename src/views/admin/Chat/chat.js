@@ -144,7 +144,7 @@ const Countdown = ({ targetDate }) => {
 
 export default function App() {
   // Set your target date here
-  const targetDate = "2024-09-29T23:59:59";
+  const targetDate = "2026-11-22T23:59:59";
 
   return <Countdown targetDate={targetDate} />;
 }

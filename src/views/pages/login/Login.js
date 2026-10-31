@@ -21,6 +21,7 @@ import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
 import { logo } from '../../../assets/brand/logo';
 import { useDispatch, useSelector } from 'react-redux';
+import { API_BASE } from 'src/api/base';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const Login = () => {
     if (accessToken) {
       const verifyToken = async () => {
         try {
-          const response = await fetch('/api/api/verify-token', {
+          const response = await fetch(`${API_BASE}/verify-token`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("/api/api/login", {
+      const response = await fetch(`${API_BASE}/temp-login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,11 +93,12 @@ const Login = () => {
         
         const decodedAccessToken = jwtDecode(data.accessToken);
         const userRole = decodedAccessToken.roles[0];
-        dispatch({ 
-          type: 'setUser', 
+        dispatch({
+          type: 'setUser',
           role: userRole,
           accessToken: data.accessToken,
-          refreshToken: data.refreshToken
+          refreshToken: data.refreshToken,
+          userInfo: data.userInfo
         });
 
        
@@ -156,11 +158,11 @@ const Login = () => {
                           <CIcon icon={cilUser} />
                         </CInputGroupText>
                         <CFormInput
-                          placeholder="Email"
+                          placeholder="Domain username or email"
                           name="email"
                           id="email"
                           type="text"
-                          autoComplete="email"
+                          autoComplete="username"
                           required
                           value={formData.email}
                           onChange={handleInputChange}

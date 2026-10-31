@@ -32,6 +32,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
+import { API_BASE } from 'src/api/base';
 
 // Custom Table component
 const CustomTable = ({ data, columns }) => {
@@ -611,7 +612,7 @@ function useGetUsers(accessToken, aggrementDetailId) {
   return useQuery({
     queryKey: ['users', aggrementDetailId],
     queryFn: async () => {
-      const response = await fetch('http://localhost:5000/api/rms/admin/landing/get_detail_aggerement', {
+      const response = await fetch(`${API_BASE}/rms/admin/landing/get_detail_aggerement`, {
         method: 'POST',
         headers: {
           'x-access-token': accessToken,
@@ -637,7 +638,7 @@ function useUpdateUsers() {
 
   return useMutation({
     mutationFn: async (dataToSend) => {
-      const response = await fetch("/api/api/rms/admin/paid_installment", {
+      const response = await fetch(`${API_BASE}/rms/admin/paid_installment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -691,7 +692,7 @@ function useDeleteUser() {
 //     mutationFn: async (data) => {
 
       
-//       const response = await fetch("/api/api/rms/admin/special_no_penality", {
+//       const response = await fetch(`${API_BASE}/rms/admin/special_no_penality`, {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -718,7 +719,7 @@ function useRegisterSpecial_No_Penality() {
 
   return useMutation({
     mutationFn: async (data) => {
-      const response = await fetch("/api/api/rms/admin/special_no_penality", {
+      const response = await fetch(`${API_BASE}/rms/admin/special_no_penality`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -746,7 +747,7 @@ function useRegisterAggrement() {
     mutationFn: async (data) => {
 
       
-      const response = await fetch("/api/api/rms/admin/restructure_agreement", {
+      const response = await fetch(`${API_BASE}/rms/admin/restructure_agreement`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
