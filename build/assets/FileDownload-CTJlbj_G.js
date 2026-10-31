@@ -1,0 +1,1 @@
+import{l as r}from"./Typography-DflkKYXz.js";import{r as t}from"./Alert-DcxDqjAh.js";import{j as a}from"./index-CdIW3KuR.js";var e={},o=r;Object.defineProperty(e,"__esModule",{value:!0});var i=e.default=void 0,l=o(t()),u=a;i=e.default=(0,l.default)((0,u.jsx)("path",{d:"M19 9h-4V3H9v6H5l7 7zM5 18v2h14v-2z"}),"FileDownload");export{i as d};

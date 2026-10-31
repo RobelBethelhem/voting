@@ -8,8 +8,9 @@ yarn.lock
 # testing
 /coverage
 
-# production
-/build
+# production: build/ is committed, because the server serves it straight from a git pull
+# (see DEPLOY_IIS.md). On the server the backend repository is cloned into Server/.
+/Server
 
 # misc
 .eslintcache
